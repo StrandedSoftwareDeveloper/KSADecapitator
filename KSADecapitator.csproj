@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="StarMap.API" Version="0.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Harmony">
+      <HintPath>references\0Harmony.dll</HintPath>
+    </Reference>
+    <Reference Include="KSA">
+      <HintPath>references\KSA.dll</HintPath>
+    </Reference>
+    <Reference Include="Brutal.Glfw">
+      <HintPath>references\Brutal.Glfw.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="Build">
+    <Exec Command="./AfterBuild.sh $(ProjectDir) $(TargetDir)" Condition=" '$(OS)' != 'Windows_NT' " />
+    <Exec Command="AfterBuild.bat $(ProjectDir) $(TargetDir)" Condition=" '$(OS)' == 'Windows_NT' " />
+  </Target>
+
+
+</Project>
