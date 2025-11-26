@@ -3,6 +3,7 @@ using StarMap.API;
 using HarmonyLib;
 using System.Reflection;
 using Brutal.GlfwApi;
+using System.Reflection.Emit;
 
 [StarMapMod]
 public class KSADecapitator {
@@ -108,18 +109,59 @@ public class DecapPatches {
         Console.WriteLine("Hi from GameSettingsApplyTo");
         return false;
     }
+}
 
-    //[HarmonyPatch(typeof(Brutal.GlfwApi.GlfwWindow), "add_OnClose")]
-    //[HarmonyPrefix]
-    public static bool Add_OnClosePatch() {
-        Console.WriteLine("Hi from add_OnClose");
-        return true;
+[HarmonyPatch(typeof(KSA.Program), MethodType.Constructor)]
+[HarmonyPatch(new Type[] { typeof(System.Collections.Generic.IReadOnlyList<string>) })]
+class ConstructorPatch {
+    [HarmonyTranspiler]
+    static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+        Console.WriteLine("Hi from the transpiler!");
+
+        List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+        for (int i = 0; i < codes.Count; i++) {
+            if (codes[i].opcode == OpCodes.Call) {
+                MethodInfo operand = codes[i].operand as MethodInfo;
+                //Console.WriteLine(operand.FullDescription());
+                if (operand.FullDescription().Contains("get_GetInstanceProcAddr()")) { //We need this patch, otherwise Harmony (actually MonoMod) gets mad about an "Unexpected null"
+                    codes[i] = new CodeInstruction(OpCodes.Call, typeof(ConstructorPatch).GetMethod(nameof(get_GetInstanceProcAddr_replace)));
+                }
+            } else if (codes[i].opcode == OpCodes.Newobj) {
+                ConstructorInfo operand = codes[i].operand as ConstructorInfo;
+                //Console.WriteLine(operand.FullDescription());
+                if (operand.FullDescription().Contains("GlfwWindowCloseCallback::.ctor")) {
+                    Console.WriteLine("Here's the thing");
+                    codes[i].opcode = OpCodes.Pop;                            //Consume the first argument
+                    codes.Insert(i+1, new CodeInstruction(OpCodes.Pop));      //Consume the second
+                    codes.Insert(i+2, new CodeInstruction(OpCodes.Ldc_I4_0)); //Push the object reference that the function was supposed to return (now null)
+                }
+            } else if (codes[i].opcode == OpCodes.Callvirt) {
+                MethodInfo operand = codes[i].operand as MethodInfo;
+                //Console.WriteLine(operand.Name);
+                if (operand.Name == "add_OnClose") {
+                    codes[i].opcode = OpCodes.Pop;
+                    codes.Insert(i+1, new CodeInstruction(OpCodes.Pop));
+                    //codes.Insert(i+2, new CodeInstruction(OpCodes.Call, typeof(ConstructorPatch).GetMethod(nameof(printer))));
+                }
+            }
+        }
+
+        Console.WriteLine("Bye from the transpiler!");
+        return codes.AsEnumerable();
+    }
+
+    public static void printer() {
+        Console.WriteLine("Howdy");
+    }
+
+    public static int get_GetInstanceProcAddr_replace() {
+        return 1;
     }
 }
 
 //[HarmonyPatch]
 //[HarmonyPatchCategory("postNativeLoad")]
-public class PostNativeLoadPatches {
+/*public class PostNativeLoadPatches {
     private static Harmony harmony = new Harmony("KSADecapitatorSecondary");
     public static void Patch() {
         Console.WriteLine("Patching post-native-load patches...");
@@ -141,4 +183,4 @@ public class PostNativeLoadPatches {
         Console.WriteLine("Hi from WindowCloseCallbackPatch");
         return true;
     }
-}
+}*/
