@@ -129,28 +129,10 @@ class ConstructorPatch {
             } else if (codes[i].opcode == OpCodes.Newobj) {
                 ConstructorInfo operand = codes[i].operand as ConstructorInfo;
                 //Console.WriteLine(operand.FullDescription());
-                if (operand.FullDescription().Contains("GlfwWindowCloseCallback::.ctor")) {
-                    Console.WriteLine("Here's the thing");
-                    codes[i].opcode = OpCodes.Pop;                            //Consume the first argument
-                    codes.Insert(i+1, new CodeInstruction(OpCodes.Pop));      //Consume the second
-                    codes.Insert(i+2, new CodeInstruction(OpCodes.Ldc_I4_0)); //Push the object reference that the function was supposed to return (now null)
-                } else if (operand.FullDescription().Contains("GlfwKeyCallback::.ctor")) {
-                    Console.WriteLine("Here's the second thing");
-                    codes[i].opcode = OpCodes.Pop;                            //Consume the first argument
-                    codes.Insert(i+1, new CodeInstruction(OpCodes.Pop));      //Consume the second
-                    codes.Insert(i+2, new CodeInstruction(OpCodes.Ldc_I4_0)); //Push the object reference that the function was supposed to return (now null)
-                } else if (operand.FullDescription().Contains("GlfwMouseButtonCallback::.ctor")) {
-                    Console.WriteLine("Here's the third thing");
-                    codes[i].opcode = OpCodes.Pop;                            //Consume the first argument
-                    codes.Insert(i+1, new CodeInstruction(OpCodes.Pop));      //Consume the second
-                    codes.Insert(i+2, new CodeInstruction(OpCodes.Ldc_I4_0)); //Push the object reference that the function was supposed to return (now null)
-                } else if (operand.FullDescription().Contains("GlfwCursorPosCallback::.ctor")) {
-                    Console.WriteLine("Here's the fourth thing");
-                    codes[i].opcode = OpCodes.Pop;                            //Consume the first argument
-                    codes.Insert(i+1, new CodeInstruction(OpCodes.Pop));      //Consume the second
-                    codes.Insert(i+2, new CodeInstruction(OpCodes.Ldc_I4_0)); //Push the object reference that the function was supposed to return (now null)
-                } else if (operand.FullDescription().Contains("GlfwScrollCallback::.ctor")) {
-                    Console.WriteLine("Here's the fifth thing");
+                if (ContainsAny(operand.FullDescription(), ["GlfwWindowCloseCallback::.ctor", "GlfwKeyCallback::.ctor",
+                                                            "GlfwMouseButtonCallback::.ctor", "GlfwCursorPosCallback::.ctor",
+                                                            "GlfwScrollCallback::.ctor"])) {
+                    Console.WriteLine("Here's the things");
                     codes[i].opcode = OpCodes.Pop;                            //Consume the first argument
                     codes.Insert(i+1, new CodeInstruction(OpCodes.Pop));      //Consume the second
                     codes.Insert(i+2, new CodeInstruction(OpCodes.Ldc_I4_0)); //Push the object reference that the function was supposed to return (now null)
@@ -158,23 +140,8 @@ class ConstructorPatch {
             } else if (codes[i].opcode == OpCodes.Callvirt) {
                 MethodInfo operand = codes[i].operand as MethodInfo;
                 //Console.WriteLine(operand.Name);
-                if (operand.Name == "add_OnClose") {
-                    codes[i].opcode = OpCodes.Pop;
-                    codes.Insert(i+1, new CodeInstruction(OpCodes.Pop));
-                    codes.Insert(i+2, new CodeInstruction(OpCodes.Call, typeof(ConstructorPatch).GetMethod(nameof(printer))));
-                } else if (operand.Name == "add_OnKey") {
-                    codes[i].opcode = OpCodes.Pop;
-                    codes.Insert(i+1, new CodeInstruction(OpCodes.Pop));
-                    codes.Insert(i+2, new CodeInstruction(OpCodes.Call, typeof(ConstructorPatch).GetMethod(nameof(printer))));
-                } else if (operand.Name == "add_OnMouseButton") {
-                    codes[i].opcode = OpCodes.Pop;
-                    codes.Insert(i+1, new CodeInstruction(OpCodes.Pop));
-                    codes.Insert(i+2, new CodeInstruction(OpCodes.Call, typeof(ConstructorPatch).GetMethod(nameof(printer))));
-                } else if (operand.Name == "add_OnCursorPos") {
-                    codes[i].opcode = OpCodes.Pop;
-                    codes.Insert(i+1, new CodeInstruction(OpCodes.Pop));
-                    codes.Insert(i+2, new CodeInstruction(OpCodes.Call, typeof(ConstructorPatch).GetMethod(nameof(printer))));
-                } else if (operand.Name == "add_OnScroll") {
+                if (ContainsAny(operand.Name, ["add_OnClose", "add_OnKey", "add_OnMouseButton",
+                                               "add_OnCursorPos", "add_OnScroll"])) {
                     codes[i].opcode = OpCodes.Pop;
                     codes.Insert(i+1, new CodeInstruction(OpCodes.Pop));
                     codes.Insert(i+2, new CodeInstruction(OpCodes.Call, typeof(ConstructorPatch).GetMethod(nameof(printer))));
@@ -184,6 +151,16 @@ class ConstructorPatch {
 
         Console.WriteLine("Bye from the transpiler!");
         return codes.AsEnumerable();
+    }
+
+    private static bool ContainsAny(string str, string[] list) {
+        for (int i=0; i<list.Length; i++) {
+            if (str.Contains(list[i])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static void printer() {
