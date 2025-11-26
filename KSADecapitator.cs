@@ -109,6 +109,13 @@ public class DecapPatches {
         Console.WriteLine("Hi from GameSettingsApplyTo");
         return false;
     }
+
+    [HarmonyPatch(typeof(KSA.GameSettings), nameof(KSA.GameSettings.PopulateSupportedResolutions))]
+    [HarmonyPrefix]
+    public static bool GameSettingsPopulateSupportedResolutions(GlfwWindow window) {
+        Console.WriteLine("Hi from GameSettingsPopulateSupportedResolutions");
+        return false;
+    }
 }
 
 [HarmonyPatch(typeof(KSA.Program), MethodType.Constructor)]
