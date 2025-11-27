@@ -20,6 +20,15 @@
     <Reference Include="Brutal.Glfw">
       <HintPath>references\Brutal.Glfw.dll</HintPath>
     </Reference>
+    <Reference Include="Planet.Render.Core">
+      <HintPath>references\Planet.Render.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Brutal.Vulkan">
+      <HintPath>references\Brutal.Vulkan.dll</HintPath>
+    </Reference>
+    <Reference Include="Brutal.Vulkan.Abstractions">
+      <HintPath>references\Brutal.Vulkan.Abstractions.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="Build">

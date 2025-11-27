@@ -4,6 +4,8 @@ using HarmonyLib;
 using System.Reflection;
 using Brutal.GlfwApi;
 using System.Reflection.Emit;
+using KSA;
+using Core;
 
 [StarMapMod]
 public class KSADecapitator {
@@ -23,6 +25,11 @@ public class DecapPatches {
         Console.WriteLine("Patching...");
         //harmony.PatchAll(typeof(DecapPatches).Assembly);
         harmony.PatchAllUncategorized(typeof(DecapPatches).Assembly);
+
+        var rendererCtorOriginal = (MethodBase)(typeof(Renderer).GetMember(".ctor", AccessTools.all)[0]);
+        //Console.WriteLine(rendererCtorOriginal);
+        var rendererCtorPatchPrefix = typeof(DecapPatches).GetMethod(nameof(RendererCtorPatch));
+        harmony.Patch(rendererCtorOriginal, new HarmonyMethod(rendererCtorPatchPrefix));
 
         /*var initOriginal = (MethodBase)(typeof(Brutal.GlfwApi.GlfwWindowCloseCallback).GetMember(".ctor", AccessTools.all)[0]);
         Console.WriteLine(initOriginal);
@@ -105,15 +112,20 @@ public class DecapPatches {
     [HarmonyPatch(typeof(KSA.GameSettings), nameof(KSA.GameSettings.ApplyTo))]
     [HarmonyPatch(new Type[] { typeof(Brutal.GlfwApi.GlfwWindow) })]
     [HarmonyPrefix]
-    public static bool GameSettingsApplyTo(GlfwWindow inWindow) {
+    public static bool GameSettingsApplyToPatch(GlfwWindow inWindow) {
         Console.WriteLine("Hi from GameSettingsApplyTo");
         return false;
     }
 
     [HarmonyPatch(typeof(KSA.GameSettings), nameof(KSA.GameSettings.PopulateSupportedResolutions))]
     [HarmonyPrefix]
-    public static bool GameSettingsPopulateSupportedResolutions(GlfwWindow window) {
+    public static bool GameSettingsPopulateSupportedResolutionsPatch(GlfwWindow window) {
         Console.WriteLine("Hi from GameSettingsPopulateSupportedResolutions");
+        return false;
+    }
+
+    public static bool RendererCtorPatch(GlfwWindow window, Brutal.VulkanApi.VkFormat depthFormat, Brutal.VulkanApi.VkPresentModeKHR presentMode, Brutal.VulkanApi.Abstractions.VulkanHelpers.Api vulkanApiVersion) {
+        Console.WriteLine("The Renderer constructor.");
         return false;
     }
 }
