@@ -29,6 +29,9 @@
     <Reference Include="Brutal.Vulkan.Abstractions">
       <HintPath>references\Brutal.Vulkan.Abstractions.dll</HintPath>
     </Reference>
+    <Reference Include="Brutal.Core.Common">
+      <HintPath>references\Brutal.Core.Common.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="Build">

@@ -6,6 +6,7 @@ using Brutal.GlfwApi;
 using System.Reflection.Emit;
 using KSA;
 using Core;
+using RenderCore;
 
 [StarMapMod]
 public class KSADecapitator {
@@ -24,6 +25,7 @@ public class DecapPatches {
     public static void Patch() {
         Console.WriteLine("Patching...");
         //harmony.PatchAll(typeof(DecapPatches).Assembly);
+
         harmony.PatchAllUncategorized(typeof(DecapPatches).Assembly);
 
         var rendererCtorOriginal = (MethodBase)(typeof(Renderer).GetMember(".ctor", AccessTools.all)[0]);
@@ -128,7 +130,48 @@ public class DecapPatches {
         Console.WriteLine("The Renderer constructor.");
         return false;
     }
+
+    [HarmonyPatch(typeof(KSA.Rendering.CommonBufferValues), nameof(KSA.Rendering.CommonBufferValues.Init))]
+    [HarmonyPrefix]
+    public static bool CommonBufferValuesInitPatch(Renderer renderer) {
+        Console.WriteLine("Hi from CommonBufferValuesInit");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(RenderCore.Systems.RenderGlobals), MethodType.Constructor)]
+    [HarmonyPatch(new Type[] { typeof(IVulkanContext) })]
+    [HarmonyPrefix]
+    public static bool RenderCoreSystemsRenderGlobalsCtor(IVulkanContext vk) {
+        Console.WriteLine("RenderCore.Systems.RenderGlobals..ctor patch");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(RenderCore.Systems.BindlessTextureLibrary), MethodType.Constructor)]
+    [HarmonyPatch(new Type[] { typeof(IVulkanContext), typeof(int) })]
+    [HarmonyPrefix]
+    public static bool RenderCoreSystemsBindlessTextureLibCtor(IVulkanContext ctx, int maxTextures) {
+        Console.WriteLine("RenderCore.Systems.BindlessTextureLibrary..ctor patch");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(GpuTextureSystem), MethodType.Constructor)]
+    [HarmonyPatch(new Type[] { typeof(IGlobalRenderSystem), typeof(RenderCore.Systems.BindlessTextureLibrary) })]
+    [HarmonyPrefix]
+    public static bool GpuTextureSystemCtor(IGlobalRenderSystem rs, RenderCore.Systems.BindlessTextureLibrary bindlessTextureLib) {
+        Console.WriteLine("GpuTextureSystem..ctor patch");
+        return false;
+    }
 }
+
+/*[HarmonyPatch(typeof(RenderCore.Systems.RenderGlobals), MethodType.Constructor)]
+[HarmonyPatch(new Type[] { typeof(IVulkanContext) })]
+class RenderGlobalsPatch {
+    [HarmonyPrefix]
+    public static bool Prefix(IVulkanContext vk) {
+        Console.WriteLine("Hello!!");
+        return false;
+    }
+}*/
 
 [HarmonyPatch(typeof(KSA.Program), MethodType.Constructor)]
 [HarmonyPatch(new Type[] { typeof(System.Collections.Generic.IReadOnlyList<string>) })]
@@ -144,6 +187,10 @@ class ConstructorPatch {
                 //Console.WriteLine(operand.FullDescription());
                 if (operand.FullDescription().Contains("get_GetInstanceProcAddr()")) { //We need this patch, otherwise Harmony (actually MonoMod) gets mad about an "Unexpected null"
                     codes[i] = new CodeInstruction(OpCodes.Call, typeof(ConstructorPatch).GetMethod(nameof(get_GetInstanceProcAddr_replace)));
+                } else if (operand?.Name == "GetMemoryProperties2") {
+                    //Console.WriteLine("This little rascal");
+                    codes[i].opcode = OpCodes.Pop;
+                    codes.Insert(i+1, new CodeInstruction(OpCodes.Pop));      //Consume the second
                 }
             } else if (codes[i].opcode == OpCodes.Newobj) {
                 ConstructorInfo operand = codes[i].operand as ConstructorInfo;
