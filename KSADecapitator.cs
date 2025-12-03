@@ -126,8 +126,9 @@ public class DecapPatches {
         return false;
     }
 
-    public static bool RendererCtorPatch(GlfwWindow window, Brutal.VulkanApi.VkFormat depthFormat, Brutal.VulkanApi.VkPresentModeKHR presentMode, Brutal.VulkanApi.Abstractions.VulkanHelpers.Api vulkanApiVersion) {
+    public static bool RendererCtorPatch(ref Renderer __instance, GlfwWindow window, Brutal.VulkanApi.VkFormat depthFormat, Brutal.VulkanApi.VkPresentModeKHR presentMode, Brutal.VulkanApi.Abstractions.VulkanHelpers.Api vulkanApiVersion) {
         Console.WriteLine("The Renderer constructor.");
+        __instance.FrameCount = 0;
         return false;
     }
 
@@ -159,6 +160,8 @@ public class DecapPatches {
     [HarmonyPrefix]
     public static bool GpuTextureSystemCtor(IGlobalRenderSystem rs, RenderCore.Systems.BindlessTextureLibrary bindlessTextureLib) {
         Console.WriteLine("GpuTextureSystem..ctor patch");
+        JankDebugger.stepMode = true;
+
         return false;
     }
 }
@@ -176,6 +179,7 @@ class RenderGlobalsPatch {
 [HarmonyPatch(typeof(KSA.Program), MethodType.Constructor)]
 [HarmonyPatch(new Type[] { typeof(System.Collections.Generic.IReadOnlyList<string>) })]
 class ConstructorPatch {
+
     [HarmonyTranspiler]
     static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
         Console.WriteLine("Hi from the transpiler!");
@@ -215,6 +219,8 @@ class ConstructorPatch {
             }
         }
 
+        JankDebugger.Inject(codes);
+
         Console.WriteLine("Bye from the transpiler!");
         return codes.AsEnumerable();
     }
@@ -235,6 +241,42 @@ class ConstructorPatch {
 
     public static int get_GetInstanceProcAddr_replace() {
         return 1;
+    }
+}
+
+static class JankDebugger {
+    public static List<CodeInstruction> instructionsCopy;
+    public static bool stepMode = true;
+
+    public static void Inject(List<CodeInstruction> codes) {
+        instructionsCopy = new List<CodeInstruction>(codes);
+
+        //Console.WriteLine(codes.Count);
+        int index = 1;
+        int numConstraned = 0;
+        for (int i = 0; i < instructionsCopy.Count-numConstraned-1; i++) {
+            if (codes[index-1].opcode == OpCodes.Constrained) {
+                index += 1;
+                numConstraned += 1;
+            }
+            codes.Insert(index, new CodeInstruction(OpCodes.Ldc_I4, i));
+            codes.Insert(index+1, new CodeInstruction(OpCodes.Call, typeof(JankDebugger).GetMethod(nameof(DebuggerFn))));
+            index += 3;
+        }
+
+        for (int i = 0; i < codes.Count; i++) {
+            //Console.WriteLine(i + ":" + codes[i].opcode + " " + codes[i].operand);
+        }
+    }
+
+    public static void DebuggerFn(int instructionIndex) {
+        if (!stepMode) {
+            return;
+        }
+        //Console.WriteLine("Instruction index: " + instructionIndex);
+        Console.WriteLine(instructionIndex + ": " + instructionsCopy[instructionIndex].opcode + " " + instructionsCopy[instructionIndex].operand);
+        Console.Write("> ");
+        Console.ReadLine();
     }
 }
 
