@@ -253,16 +253,16 @@ static class JankDebugger {
         instructionsCopy = new List<CodeInstruction>(codes);
 
         //Console.WriteLine(codes.Count);
-        int index = 1;
+        int index = 0;
         int numConstraned = 0;
         for (int i = 0; i < instructionsCopy.Count-numConstraned-1; i++) {
+            codes.Insert(index, new CodeInstruction(OpCodes.Ldc_I4, i));
+            codes.Insert(index+1, new CodeInstruction(OpCodes.Call, typeof(JankDebugger).GetMethod(nameof(DebuggerFn))));
+            index += 3;
             if (codes[index-1].opcode == OpCodes.Constrained) {
                 index += 1;
                 numConstraned += 1;
             }
-            codes.Insert(index, new CodeInstruction(OpCodes.Ldc_I4, i));
-            codes.Insert(index+1, new CodeInstruction(OpCodes.Call, typeof(JankDebugger).GetMethod(nameof(DebuggerFn))));
-            index += 3;
         }
 
         for (int i = 0; i < codes.Count; i++) {
