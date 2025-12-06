@@ -32,9 +32,6 @@
     <Reference Include="Brutal.Core.Common">
       <HintPath>references\Brutal.Core.Common.dll</HintPath>
     </Reference>
-    <Reference Include="MonoMod.RuntimeDetour">
-      <HintPath>references\MonoMod.RuntimeDetour.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
   <ItemGroup>

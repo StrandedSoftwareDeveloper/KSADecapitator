@@ -7,7 +7,7 @@ using System.Reflection.Emit;
 using KSA;
 using Core;
 using RenderCore;
-using MonoMod.RuntimeDetour;
+//using MonoMod.RuntimeDetour;
 
 [StarMapMod]
 public class KSADecapitator {
@@ -21,7 +21,7 @@ public class KSADecapitator {
 [HarmonyPatch]
 public class DecapPatches {
     private static Harmony harmony = new Harmony("KSADecapitatorPrimary");
-    private static Hook _createSamplerHook;
+    //private static Hook _createSamplerHook;
 
     public static void Patch() {
         Console.WriteLine("Patching...");
@@ -40,11 +40,11 @@ public class DecapPatches {
         var rendererCtorPatchPrefix = typeof(DecapPatches).GetMethod(nameof(RendererCtorPatch));
         harmony.Patch(rendererCtorOriginal, new HarmonyMethod(rendererCtorPatchPrefix));
 
-        var createSamplerOrig = (MethodBase)(typeof(Brutal.VulkanApi.VkDeviceExtensions).GetMember(nameof(Brutal.VulkanApi.VkDeviceExtensions.CreateSampler), AccessTools.all)[0]);
+        /*var createSamplerOrig = (MethodBase)(typeof(Brutal.VulkanApi.VkDeviceExtensions).GetMember(nameof(Brutal.VulkanApi.VkDeviceExtensions.CreateSampler), AccessTools.all)[0]);
         var createSamplerPatch = typeof(DecapPatches).GetMethod(nameof(VkDeviceExtensionsCreateSamplerPatch));
         Console.WriteLine("Making the RuntimeDetour...");
         var _createSamplerHook = new Hook(createSamplerOrig, createSamplerPatch);
-        Console.WriteLine("Done with that");
+        Console.WriteLine("Done with that");*/
         
         /*var createSampleOrig = (MethodBase)(typeof(Brutal.VulkanApi.VkDeviceExtensions).GetMember(nameof(Brutal.VulkanApi.VkDeviceExtensions.CreateSampler), AccessTools.all)[0]);
         Console.WriteLine(createSampleOrig);
@@ -178,8 +178,6 @@ public class DecapPatches {
     [HarmonyPrefix]
     public static bool GpuTextureSystemCtor(IGlobalRenderSystem rs, RenderCore.Systems.BindlessTextureLibrary bindlessTextureLib) {
         Console.WriteLine("GpuTextureSystem..ctor patch");
-        JankDebugger.stepMode = true;
-
         return false;
     }
 
@@ -188,6 +186,46 @@ public class DecapPatches {
     public static bool KSADeviceContextEx_get_DevicePatch(ref Brutal.VulkanApi.Abstractions.DeviceEx __result) {
         Console.WriteLine("Hi from KSADeviceContextEx_get_Device");
         __result = (Brutal.VulkanApi.Abstractions.DeviceEx)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(Brutal.VulkanApi.Abstractions.DeviceEx));
+        GC.SuppressFinalize(__result); //Might be a memory leak, but the program crashes when the GC tries to run the Finalizer, so...
+        return false;
+    }
+
+    [HarmonyPatch(typeof(GpuTextureSystem), nameof(GpuTextureSystem.AddSampler))]
+    [HarmonyPrefix]
+    public static bool GpuTextureSystemAddSamplerPatch() {
+        Console.WriteLine("GpuTextureSystemAddSampler patch");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.ImGuiBackend), nameof(KSA.ImGuiBackend.Initialize))]
+    [HarmonyPrefix]
+    public static bool ImGuiBackendInitPatch() {
+        Console.WriteLine("ImGuiBackendInit patch");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.Loading), MethodType.Constructor)]
+    [HarmonyPrefix]
+    public static bool LoadingCtor() {
+        Console.WriteLine("Loading..ctor patch");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.Loading), nameof(KSA.Loading.OnFrame))]
+    [HarmonyPrefix]
+    public static bool LoadingOnFramePatch() {
+        Console.WriteLine("LoadingOnFrame patch");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.Loading), nameof(KSA.Loading.Task))]
+    [HarmonyPrefix]
+    public static bool LoadingTaskPatch(ref KSA.LoadTask __result, string task) {
+        Console.WriteLine("LoadingTask patch");
+        JankDebugger.stepMode = true;
+
+        __result = (KSA.LoadTask)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(KSA.LoadTask));
+
         return false;
     }
 
@@ -196,18 +234,6 @@ public class DecapPatches {
     public static bool VkDeviceExtensionsCreateSamplerPatch() {
         Console.WriteLine("Hi from VkDeviceExtensionsCreateSampler");
         return false;
-    }*/
-
-    public static Brutal.VulkanApi.VkSampler VkDeviceExtensionsCreateSamplerPatch(Brutal.VulkanApi.VulkanHandleWrapper<Brutal.VulkanApi.VkDevice, Brutal.VulkanApi.VkDevice.FunctionTable> handle, in Brutal.VulkanApi.VkSamplerCreateInfo info, Brutal.VulkanApi.VkAllocator alloc) {
-        Console.WriteLine("Hi from VkDeviceExtensionsCreateSampler");
-        return default;
-    }
-
-    /*[HarmonyPatch(typeof(Brutal.VulkanApi.VkDeviceExtensions), nameof(Brutal.VulkanApi.VkDeviceExtensions.CreateSampler))]
-    [HarmonyTranspiler]
-    static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
-        Console.WriteLine("Hi from the VkDeviceExtensionsCreateSampler transpiler");
-        return instructions;
     }*/
 }
 
@@ -240,6 +266,11 @@ class ConstructorPatch {
                     //Console.WriteLine("This little rascal");
                     codes[i].opcode = OpCodes.Pop;
                     codes.Insert(i+1, new CodeInstruction(OpCodes.Pop));      //Consume the second
+                } else if (operand?.Name == "CreateSampler") {
+                    codes[i].opcode = OpCodes.Pop;                            //Consume the first argument
+                    codes.Insert(i+1, new CodeInstruction(OpCodes.Pop));      //Consume the second
+                    codes.Insert(i+2, new CodeInstruction(OpCodes.Pop));      //Consume the second
+                    codes.Insert(i+3, new CodeInstruction(OpCodes.Ldc_I4_0)); //Push the object reference that the function was supposed to return (now null)
                 }
             } else if (codes[i].opcode == OpCodes.Newobj) {
                 ConstructorInfo operand = codes[i].operand as ConstructorInfo;
@@ -311,7 +342,7 @@ static class JankDebugger {
         }
 
         for (int i = 0; i < codes.Count; i++) {
-            //Console.WriteLine(i + ":" + codes[i].opcode + " " + codes[i].operand);
+            Console.WriteLine(i + ":" + codes[i].opcode + " " + codes[i].operand);
         }
     }
 
