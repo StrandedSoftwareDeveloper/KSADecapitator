@@ -7,6 +7,7 @@ using System.Reflection.Emit;
 using KSA;
 using Core;
 using RenderCore;
+using MonoMod.RuntimeDetour;
 
 [StarMapMod]
 public class KSADecapitator {
@@ -14,17 +15,23 @@ public class KSADecapitator {
     public void preMain() {
         Console.WriteLine("[KSADecapitator]: Hi from before main!");
         DecapPatches.Patch();
-
     }
 }
 
 [HarmonyPatch]
 public class DecapPatches {
     private static Harmony harmony = new Harmony("KSADecapitatorPrimary");
+    private static Hook _createSamplerHook;
 
     public static void Patch() {
         Console.WriteLine("Patching...");
         //harmony.PatchAll(typeof(DecapPatches).Assembly);
+
+        //Harmony.DEBUG = true; 
+
+        /*var t = AccessTools.TypeByName("MonoMod.Switches");
+        var m = AccessTools.Method(t, "SetSwitchValue");
+        m.Invoke(null, ["DMDType", "cecil"]);*/
 
         harmony.PatchAllUncategorized(typeof(DecapPatches).Assembly);
 
@@ -32,6 +39,17 @@ public class DecapPatches {
         //Console.WriteLine(rendererCtorOriginal);
         var rendererCtorPatchPrefix = typeof(DecapPatches).GetMethod(nameof(RendererCtorPatch));
         harmony.Patch(rendererCtorOriginal, new HarmonyMethod(rendererCtorPatchPrefix));
+
+        var createSamplerOrig = (MethodBase)(typeof(Brutal.VulkanApi.VkDeviceExtensions).GetMember(nameof(Brutal.VulkanApi.VkDeviceExtensions.CreateSampler), AccessTools.all)[0]);
+        var createSamplerPatch = typeof(DecapPatches).GetMethod(nameof(VkDeviceExtensionsCreateSamplerPatch));
+        Console.WriteLine("Making the RuntimeDetour...");
+        var _createSamplerHook = new Hook(createSamplerOrig, createSamplerPatch);
+        Console.WriteLine("Done with that");
+        
+        /*var createSampleOrig = (MethodBase)(typeof(Brutal.VulkanApi.VkDeviceExtensions).GetMember(nameof(Brutal.VulkanApi.VkDeviceExtensions.CreateSampler), AccessTools.all)[0]);
+        Console.WriteLine(createSampleOrig);
+        var createSamplePatch = typeof(DecapPatches).GetMethod(nameof(VkDeviceExtensionsCreateSamplerPatch));
+        harmony.Patch(createSampleOrig, new HarmonyMethod(createSamplePatch));*/
 
         /*var initOriginal = (MethodBase)(typeof(Brutal.GlfwApi.GlfwWindowCloseCallback).GetMember(".ctor", AccessTools.all)[0]);
         Console.WriteLine(initOriginal);
@@ -164,6 +182,33 @@ public class DecapPatches {
 
         return false;
     }
+
+    [HarmonyPatch(typeof(Core.KSADeviceContextEx), "get_Device")]
+    [HarmonyPrefix]
+    public static bool KSADeviceContextEx_get_DevicePatch(ref Brutal.VulkanApi.Abstractions.DeviceEx __result) {
+        Console.WriteLine("Hi from KSADeviceContextEx_get_Device");
+        __result = (Brutal.VulkanApi.Abstractions.DeviceEx)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(Brutal.VulkanApi.Abstractions.DeviceEx));
+        return false;
+    }
+
+    /*[HarmonyPatch(typeof(Brutal.VulkanApi.VkDeviceExtensions), nameof(Brutal.VulkanApi.VkDeviceExtensions.CreateSampler))]
+    [HarmonyPrefix]
+    public static bool VkDeviceExtensionsCreateSamplerPatch() {
+        Console.WriteLine("Hi from VkDeviceExtensionsCreateSampler");
+        return false;
+    }*/
+
+    public static Brutal.VulkanApi.VkSampler VkDeviceExtensionsCreateSamplerPatch(Brutal.VulkanApi.VulkanHandleWrapper<Brutal.VulkanApi.VkDevice, Brutal.VulkanApi.VkDevice.FunctionTable> handle, in Brutal.VulkanApi.VkSamplerCreateInfo info, Brutal.VulkanApi.VkAllocator alloc) {
+        Console.WriteLine("Hi from VkDeviceExtensionsCreateSampler");
+        return default;
+    }
+
+    /*[HarmonyPatch(typeof(Brutal.VulkanApi.VkDeviceExtensions), nameof(Brutal.VulkanApi.VkDeviceExtensions.CreateSampler))]
+    [HarmonyTranspiler]
+    static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+        Console.WriteLine("Hi from the VkDeviceExtensionsCreateSampler transpiler");
+        return instructions;
+    }*/
 }
 
 /*[HarmonyPatch(typeof(RenderCore.Systems.RenderGlobals), MethodType.Constructor)]

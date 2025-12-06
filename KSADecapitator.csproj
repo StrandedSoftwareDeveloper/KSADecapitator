@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
+  <!--<ItemGroup>
     <PackageReference Include="StarMap.API" Version="0.3.1" />
-  </ItemGroup>
+  </ItemGroup>-->
 
   <ItemGroup>
     <Reference Include="Harmony">
@@ -32,6 +32,13 @@
     <Reference Include="Brutal.Core.Common">
       <HintPath>references\Brutal.Core.Common.dll</HintPath>
     </Reference>
+    <Reference Include="MonoMod.RuntimeDetour">
+      <HintPath>references\MonoMod.RuntimeDetour.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="StarMap.API" Version="0.3.4" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="Build">
