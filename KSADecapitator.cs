@@ -204,28 +204,11 @@ public class DecapPatches {
         return false;
     }
 
-    [HarmonyPatch(typeof(KSA.Loading), MethodType.Constructor)]
-    [HarmonyPrefix]
-    public static bool LoadingCtor() {
-        Console.WriteLine("Loading..ctor patch");
-        return false;
-    }
-
     [HarmonyPatch(typeof(KSA.Loading), nameof(KSA.Loading.OnFrame))]
     [HarmonyPrefix]
     public static bool LoadingOnFramePatch() {
         Console.WriteLine("LoadingOnFrame patch");
-        return false;
-    }
-
-    [HarmonyPatch(typeof(KSA.Loading), nameof(KSA.Loading.Task))]
-    [HarmonyPrefix]
-    public static bool LoadingTaskPatch(ref KSA.LoadTask __result, string task) {
-        Console.WriteLine("LoadingTask patch");
-        JankDebugger.stepMode = true;
-
-        __result = (KSA.LoadTask)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(KSA.LoadTask));
-
+        //JankDebugger.stepMode = true;
         return false;
     }
 
@@ -342,7 +325,7 @@ static class JankDebugger {
         }
 
         for (int i = 0; i < codes.Count; i++) {
-            Console.WriteLine(i + ":" + codes[i].opcode + " " + codes[i].operand);
+            //Console.WriteLine(i + ":" + codes[i].opcode + " " + codes[i].operand);
         }
     }
 
