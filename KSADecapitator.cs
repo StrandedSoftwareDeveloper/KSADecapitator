@@ -207,7 +207,42 @@ public class DecapPatches {
     [HarmonyPatch(typeof(KSA.Loading), nameof(KSA.Loading.OnFrame))]
     [HarmonyPrefix]
     public static bool LoadingOnFramePatch() {
-        Console.WriteLine("LoadingOnFrame patch");
+        //Console.WriteLine("LoadingOnFrame patch");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.SelectSystem), nameof(KSA.SelectSystem.OnFrame))]
+    [HarmonyPrefix]
+    public static bool SelectSystemOnFramePatch(ref KSA.SelectSystem __instance) {
+        Console.WriteLine("SelectSystemOnFrame patch\n");
+        Console.WriteLine("Please select a system:");
+        for (int i = 0; i < KSA.SelectSystem.Systems.Count; i++) {
+            KSA.SystemInfo systemInfo = KSA.SelectSystem.Systems[i];
+            Console.WriteLine("(" + i + ") " + systemInfo.DisplayName);
+        }
+
+        Console.Write("> ");
+        string? systemSelection = Console.ReadLine();
+        if (systemSelection == null || systemSelection.Length == 0) {
+            return false;
+        }
+
+        int systemNum;
+        if (!int.TryParse(systemSelection, out systemNum)) {
+            return false;
+        }
+
+        if (systemNum < 0 || systemNum >= KSA.SelectSystem.Systems.Count) {
+            return false;
+        }
+
+        KSA.SystemInfo selectedSystemInfo = KSA.SelectSystem.Systems[systemNum];
+        Console.WriteLine("Selected \"" + selectedSystemInfo.DisplayName + "\"");
+        KSA.SystemLibrary.Default = selectedSystemInfo;
+
+        KSA.ConfigOnStartPopup popup = (KSA.ConfigOnStartPopup)Traverse.Create(__instance).Field("<ConfigOnStartPopup>k__BackingField").GetValue();
+        popup.Active = false;
+
         //JankDebugger.stepMode = true;
         return false;
     }
