@@ -247,6 +247,20 @@ public class DecapPatches {
         return false;
     }
 
+    [HarmonyPatch(typeof(KSA.ShaderReference), "DoLoad")]
+    [HarmonyPrefix]
+    public static bool ShaderRefDoLoadPrefix() {
+        Console.WriteLine("ShaderRefDoLoad prefix");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.Viewport), nameof(KSA.Viewport.BuildRenderTarget))]
+    [HarmonyPrefix]
+    public static bool ViewportBuildRenderTargetPrefix() {
+        Console.WriteLine("ViewportBuildRenderTarget prefix");
+        return false;
+    }
+
     /*[HarmonyPatch(typeof(Brutal.VulkanApi.VkDeviceExtensions), nameof(Brutal.VulkanApi.VkDeviceExtensions.CreateSampler))]
     [HarmonyPrefix]
     public static bool VkDeviceExtensionsCreateSamplerPatch() {
@@ -340,7 +354,7 @@ class ConstructorPatch {
 
 static class JankDebugger {
     public static List<CodeInstruction> instructionsCopy;
-    public static bool stepMode = true;
+    public static bool stepMode = false;
     public static int stepCount = 0;
 
     public static void Inject(List<CodeInstruction> codes) {
