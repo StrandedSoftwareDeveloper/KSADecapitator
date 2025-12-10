@@ -265,7 +265,6 @@ public class DecapPatches {
     [HarmonyPrefix]
     public static bool ProgramBuildRenderTargetsPrefix() {  
         Console.WriteLine("ProgramBuildRenderTargets prefix");
-        JankDebugger.stepMode = true;
         return false;
     }
 
@@ -273,7 +272,45 @@ public class DecapPatches {
     [HarmonyPrefix]
     public static bool ModLibBindPrefix() {  
         Console.WriteLine("ModLibBind prefix");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.Rendering.Lighting.LightSystem), MethodType.Constructor)]
+    [HarmonyPatch(new Type[] { typeof(IGlobalRenderSystem), typeof(GpuTextureSystem), typeof(int), typeof(Brutal.VulkanApi.Abstractions.IBufferAllocator), typeof(Brutal.VulkanApi.Abstractions.DescriptorPoolEx) })]
+    [HarmonyPrefix]
+    public static bool LightSystemCtor() {
+        Console.WriteLine("LightSystem..ctor prefix");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.Rendering.Lighting.SunShadowTechnique), MethodType.Constructor)]
+    [HarmonyPatch(new Type[] { typeof(IGlobalRenderSystem), typeof(GpuTextureSystem), typeof(int), typeof(Brutal.VulkanApi.Abstractions.IBufferAllocator), typeof(Brutal.VulkanApi.Abstractions.DescriptorPoolEx) })]
+    [HarmonyPrefix]
+    public static bool LightingSunShadowTechniqueCtor() {
+        Console.WriteLine("LightingSunShadowTechnique..ctor prefix");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.Rendering.Lighting.VehicleDepthRenderer), nameof(KSA.Rendering.Lighting.VehicleDepthRenderer.Build))]
+    [HarmonyPrefix]
+    public static bool VehicleDepthRendererBuildPfx() {  
+        Console.WriteLine("VehicleDepthRendererBuild prefix");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.GlobalShaderBindings), nameof(KSA.GlobalShaderBindings.Initialize))]
+    [HarmonyPrefix]
+    public static bool GlobalShaderBindingsInitPfx() {  
+        Console.WriteLine("GlobalShaderBindingsInit prefix");
         JankDebugger.stepMode = true;
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.SuperMeshRenderSystem), MethodType.Constructor)]
+    [HarmonyPatch(new Type[] { typeof(IGlobalRenderSystem), typeof(GpuTextureSystem), typeof(KSA.Rendering.Lighting.LightSystem) })]
+    [HarmonyPrefix]
+    public static bool SuperMeshRenderSystemCtor() {
+        Console.WriteLine("SuperMeshRenderSystem..ctor prefix");
         return false;
     }
 
