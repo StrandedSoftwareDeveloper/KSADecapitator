@@ -261,6 +261,22 @@ public class DecapPatches {
         return false;
     }
 
+    [HarmonyPatch(typeof(KSA.Program), "BuildRenderTargets")]
+    [HarmonyPrefix]
+    public static bool ProgramBuildRenderTargetsPrefix() {  
+        Console.WriteLine("ProgramBuildRenderTargets prefix");
+        JankDebugger.stepMode = true;
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.ModLibrary), nameof(KSA.ModLibrary.Bind))]
+    [HarmonyPrefix]
+    public static bool ModLibBindPrefix() {  
+        Console.WriteLine("ModLibBind prefix");
+        JankDebugger.stepMode = true;
+        return false;
+    }
+
     /*[HarmonyPatch(typeof(Brutal.VulkanApi.VkDeviceExtensions), nameof(Brutal.VulkanApi.VkDeviceExtensions.CreateSampler))]
     [HarmonyPrefix]
     public static bool VkDeviceExtensionsCreateSamplerPatch() {
@@ -361,16 +377,17 @@ static class JankDebugger {
         instructionsCopy = new List<CodeInstruction>(codes);
 
         //Console.WriteLine(codes.Count);
-        int index = 0;
+        int index = 1;
         int numConstraned = 0;
         for (int i = 0; i < instructionsCopy.Count-numConstraned-1; i++) {
-            codes.Insert(index, new CodeInstruction(OpCodes.Ldc_I4, i));
-            codes.Insert(index+1, new CodeInstruction(OpCodes.Call, typeof(JankDebugger).GetMethod(nameof(DebuggerFn))));
-            index += 3;
             if (codes[index-1].opcode == OpCodes.Constrained) {
                 index += 1;
                 numConstraned += 1;
+                continue;
             }
+            codes.Insert(index, new CodeInstruction(OpCodes.Ldc_I4, i+1));
+            codes.Insert(index+1, new CodeInstruction(OpCodes.Call, typeof(JankDebugger).GetMethod(nameof(DebuggerFn))));
+            index += 3;
         }
 
         for (int i = 0; i < codes.Count; i++) {
