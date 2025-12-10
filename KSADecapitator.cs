@@ -250,7 +250,7 @@ public class DecapPatches {
     [HarmonyPatch(typeof(KSA.ShaderReference), "DoLoad")]
     [HarmonyPrefix]
     public static bool ShaderRefDoLoadPrefix() {
-        Console.WriteLine("ShaderRefDoLoad prefix");
+        //Console.WriteLine("ShaderRefDoLoad prefix");
         return false;
     }
 
@@ -302,7 +302,6 @@ public class DecapPatches {
     [HarmonyPrefix]
     public static bool GlobalShaderBindingsInitPfx() {  
         Console.WriteLine("GlobalShaderBindingsInit prefix");
-        JankDebugger.stepMode = true;
         return false;
     }
 
@@ -311,6 +310,66 @@ public class DecapPatches {
     [HarmonyPrefix]
     public static bool SuperMeshRenderSystemCtor() {
         Console.WriteLine("SuperMeshRenderSystem..ctor prefix");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.CharacterRenderResources), MethodType.Constructor)]
+    [HarmonyPatch(new Type[] { typeof(IGlobalRenderSystem), typeof(KSA.SuperMeshRenderSystem) })]
+    [HarmonyPrefix]
+    public static bool CharacterRenderResourcesCtor() {
+        Console.WriteLine("CharacterRenderResources..ctor prefix");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.InstancedStarTechnique), MethodType.Constructor)]
+    [HarmonyPatch(new Type[] { typeof(Renderer), typeof(RenderPassState), typeof(Span<ShaderReference>), typeof(Brutal.VulkanApi.VkSampler), typeof(int), typeof(int), typeof(Brutal.VulkanApi.VkImageView) })]
+    [HarmonyPrefix]
+    public static bool InstancedStarTechniqueCtor() {
+        Console.WriteLine("InstancedStarTechnique..ctor prefix");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.InstancedStarTechnique), nameof(KSA.InstancedStarTechnique.AddInstance))]
+    [HarmonyPrefix]
+    public static bool InstancedStarTechniqueAddInstancePrefix() {  
+        //Console.WriteLine("InstancedStarTechniqueAddInstance prefix"); //Lots of log spam from this one, it's called once per star it seems
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.InstancedStarTechnique), nameof(KSA.InstancedStarTechnique.UpdateInstanceBuffer))]
+    [HarmonyPrefix]
+    public static bool InstancedStarTechniqueUpdateInstanceBufPrefix() {  
+        Console.WriteLine("InstancedStarTechniqueUpdateInstanceBuf prefix");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.SubPartSelectedRenderer), nameof(KSA.SubPartSelectedRenderer.Build))]
+    [HarmonyPrefix]
+    public static bool SubPartSelectedRendererBuildPrefix() {  
+        Console.WriteLine("SubPartSelectedRendererBuild prefix");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.SubPartModelRenderer.ColorData), nameof(KSA.SubPartModelRenderer.ColorData.Build))]
+    [HarmonyPrefix]
+    public static bool SubPartModelRendererColorDataBuildPrefix() {  
+        Console.WriteLine("SubPartModelRendererColorDataBuild prefix");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.SubPartModelRenderer.DepthData), nameof(KSA.SubPartModelRenderer.DepthData.Build))]
+    [HarmonyPrefix]
+    public static bool SubPartModelRendererDepthDataBuildPrefix() {  
+        Console.WriteLine("SubPartModelRendererDepthDataBuild prefix");
+        JankDebugger.stepMode = true;
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.DistantSphereRenderer), MethodType.Constructor)]
+    [HarmonyPatch(new Type[] { typeof(StaticCelestial), typeof(RendererContext), typeof(MeshReference), typeof(Span<ShaderReference>) })]
+    [HarmonyPrefix]
+    public static bool DistantSphereRendererCtor() {
+        Console.WriteLine("DistantSphereRenderer..ctor prefix");
         return false;
     }
 
