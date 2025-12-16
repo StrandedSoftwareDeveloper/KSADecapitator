@@ -7,7 +7,6 @@ using System.Reflection.Emit;
 using KSA;
 using Core;
 using RenderCore;
-//using MonoMod.RuntimeDetour;
 
 [StarMapMod]
 public class KSADecapitator {
@@ -382,6 +381,16 @@ public class DecapPatches {
         return false;
     }
     
+    [HarmonyPatch(typeof(KSA.SubPartModel), MethodType.Constructor)]
+    [HarmonyPatch(new Type[] { typeof(SubPartModel.SubPartModelReference) })]
+    [HarmonyPrefix]
+    public static bool SubPartModelCtor(ref SubPartModel __instance, SubPartModel.SubPartModelReference inModelReference) {
+        Console.WriteLine("SubPartModel..ctor prefix");
+        __instance.ModelReference = inModelReference.Get();
+
+        return false;
+    }
+
     /*[HarmonyPatch(typeof(KSA.Celestial), "SampleHeightMapBicubic")]
     [HarmonyTranspiler]
     static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
@@ -389,13 +398,6 @@ public class DecapPatches {
         JankDebugger.Inject(codes);
         JankDebugger.stepMode = true;
         return codes.AsEnumerable();
-    }*/
-
-    /*[HarmonyPatch(typeof(Brutal.VulkanApi.VkDeviceExtensions), nameof(Brutal.VulkanApi.VkDeviceExtensions.CreateSampler))]
-    [HarmonyPrefix]
-    public static bool VkDeviceExtensionsCreateSamplerPatch() {
-        Console.WriteLine("Hi from VkDeviceExtensionsCreateSampler");
-        return false;
     }*/
 }
 
