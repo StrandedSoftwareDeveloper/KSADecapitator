@@ -147,6 +147,15 @@ public class DecapPatches {
     public static bool RendererCtorPatch(ref Renderer __instance, GlfwWindow window, Brutal.VulkanApi.VkFormat depthFormat, Brutal.VulkanApi.VkPresentModeKHR presentMode, Brutal.VulkanApi.Abstractions.VulkanHelpers.Api vulkanApiVersion) {
         Console.WriteLine("The Renderer constructor.");
         __instance.FrameCount = 0;
+        __instance.DeviceSeries = new DeviceSeriesInfo(__instance);
+        return false;
+    }
+
+    [HarmonyPatch(typeof(Brutal.VulkanApi.VkInstanceExtensions), nameof(Brutal.VulkanApi.VkInstanceExtensions.GetProperties))]
+    [HarmonyPatch(new Type[] { typeof(Brutal.VulkanApi.VulkanHandleWrapper<Brutal.VulkanApi.VkPhysicalDevice, Brutal.VulkanApi.VkInstance.FunctionTable>) })]
+    [HarmonyPrefix]
+    public static bool VkInstanceExtensionsGetPropsPatch() {
+        Console.WriteLine("Hi from VkInstanceExtensionsGetProps patch");
         return false;
     }
 
@@ -372,6 +381,15 @@ public class DecapPatches {
         Console.WriteLine("DistantSphereRenderer..ctor prefix");
         return false;
     }
+    
+    /*[HarmonyPatch(typeof(KSA.Celestial), "SampleHeightMapBicubic")]
+    [HarmonyTranspiler]
+    static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+        List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+        JankDebugger.Inject(codes);
+        JankDebugger.stepMode = true;
+        return codes.AsEnumerable();
+    }*/
 
     /*[HarmonyPatch(typeof(Brutal.VulkanApi.VkDeviceExtensions), nameof(Brutal.VulkanApi.VkDeviceExtensions.CreateSampler))]
     [HarmonyPrefix]
@@ -456,7 +474,7 @@ class ConstructorPatch {
     }
 
     public static void printer() {
-        Console.WriteLine("Howdy5");
+        Console.WriteLine("Callback adder callsite patch");
     }
 
     public static int get_GetInstanceProcAddr_replace() {
