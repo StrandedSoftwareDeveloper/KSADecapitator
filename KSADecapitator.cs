@@ -7,6 +7,7 @@ using System.Reflection.Emit;
 using KSA;
 using Core;
 using RenderCore;
+using Brutal.VulkanApi;
 
 [StarMapMod]
 public class KSADecapitator {
@@ -174,9 +175,9 @@ public class DecapPatches {
     }
 
     [HarmonyPatch(typeof(RenderCore.Systems.BindlessTextureLibrary), MethodType.Constructor)]
-    [HarmonyPatch(new Type[] { typeof(IVulkanContext), typeof(int) })]
+    [HarmonyPatch(new Type[] { typeof(IVulkanContext), typeof(int), typeof(VkShaderStageFlags) })]
     [HarmonyPrefix]
-    public static bool RenderCoreSystemsBindlessTextureLibCtor(IVulkanContext ctx, int maxTextures) {
+    public static bool RenderCoreSystemsBindlessTextureLibCtor(IVulkanContext ctx, int maxTextures, VkShaderStageFlags forceShaderStages) {
         Console.WriteLine("RenderCore.Systems.BindlessTextureLibrary..ctor patch");
         return false;
     }
@@ -291,20 +292,43 @@ public class DecapPatches {
         return false;
     }
 
+    [HarmonyPatch(typeof(Brutal.GlfwApi.GlfwWindow), "set_Visible")]
+    [HarmonyPrefix]
+    public static bool GlfwWindowSetVisiblePatch(bool value) {
+        Console.WriteLine("Hi from GlfwWindowSetVisible prefix");
+        return false;
+    }
+
     [HarmonyPatch(typeof(KSA.Rendering.Lighting.SunShadowTechnique), MethodType.Constructor)]
-    [HarmonyPatch(new Type[] { typeof(IGlobalRenderSystem), typeof(GpuTextureSystem), typeof(int), typeof(Brutal.VulkanApi.Abstractions.IBufferAllocator), typeof(Brutal.VulkanApi.Abstractions.DescriptorPoolEx) })]
+    [HarmonyPatch(new Type[] { typeof(IGlobalRenderSystem), typeof(GpuTextureSystem), typeof(int), typeof(Brutal.VulkanApi.Abstractions.IBufferAllocator) })]
     [HarmonyPrefix]
     public static bool LightingSunShadowTechniqueCtor() {
         Console.WriteLine("LightingSunShadowTechnique..ctor prefix");
         return false;
     }
 
-    [HarmonyPatch(typeof(KSA.Rendering.Lighting.VehicleDepthRenderer), nameof(KSA.Rendering.Lighting.VehicleDepthRenderer.Build))]
+    [HarmonyPatch(typeof(KSA.Rendering.Lighting.CascadedShadowSystem), MethodType.Constructor)]
+    [HarmonyPatch(new Type[] { typeof(IGlobalRenderSystem), typeof(GpuTextureSystem), typeof(int), typeof(Brutal.VulkanApi.Abstractions.IBufferAllocator), typeof(Nullable<KSA.Rendering.Lighting.CascadedShadowSystem.Settings>) })]
+    [HarmonyPrefix]
+    public static bool LightingCascadedShadowSystemCtor(IGlobalRenderSystem inRenderSystem, GpuTextureSystem inTextureSystem, Int32 inSamplerHandle, Brutal.VulkanApi.Abstractions.IBufferAllocator inAllocator, Nullable<KSA.Rendering.Lighting.CascadedShadowSystem.Settings> inConfig) {
+        Console.WriteLine("LightingCascadedShadowSystem..ctor prefix");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.GpuMaterialSystem), MethodType.Constructor)]
+    [HarmonyPatch(new Type[] { typeof(IGlobalRenderSystem), typeof(GpuTextureSystem), typeof(int), typeof(VkShaderStageFlags) })]
+    [HarmonyPrefix]
+    public static bool GpuMaterialSystemCtor(IGlobalRenderSystem rs, GpuTextureSystem texSys, Int32 capacity, VkShaderStageFlags forceStageFlags) {
+        Console.WriteLine("GpuMaterialSystem..ctor prefix");
+        return false;
+    }
+
+    /*[HarmonyPatch(typeof(KSA.Rendering.Lighting.VehicleDepthRenderer), nameof(KSA.Rendering.Lighting.VehicleDepthRenderer.Build))]
     [HarmonyPrefix]
     public static bool VehicleDepthRendererBuildPfx() {  
         Console.WriteLine("VehicleDepthRendererBuild prefix");
         return false;
-    }
+    }*/
 
     [HarmonyPatch(typeof(KSA.GlobalShaderBindings), nameof(KSA.GlobalShaderBindings.Initialize))]
     [HarmonyPrefix]
@@ -313,7 +337,15 @@ public class DecapPatches {
         return false;
     }
 
-    [HarmonyPatch(typeof(KSA.SuperMeshRenderSystem), MethodType.Constructor)]
+    [HarmonyPatch(typeof(KSA.PrePassRenderer), nameof(KSA.PrePassRenderer.Build))]
+    [HarmonyPrefix]
+    public static bool PrePassRendererBuildPfx() {  
+        Console.WriteLine("PrePassRendererBuild prefix");
+        JankDebugger.stepMode = true;
+        return false;
+    }
+
+    /*[HarmonyPatch(typeof(KSA.SuperMeshRenderSystem), MethodType.Constructor)]
     [HarmonyPatch(new Type[] { typeof(IGlobalRenderSystem), typeof(GpuTextureSystem), typeof(KSA.Rendering.Lighting.LightSystem) })]
     [HarmonyPrefix]
     public static bool SuperMeshRenderSystemCtor() {
@@ -389,7 +421,7 @@ public class DecapPatches {
         __instance.ModelReference = inModelReference.Get();
 
         return false;
-    }
+    }*/
 
     /*[HarmonyPatch(typeof(KSA.Celestial), "SampleHeightMapBicubic")]
     [HarmonyTranspiler]
@@ -424,9 +456,9 @@ class ConstructorPatch {
             if (codes[i].opcode == OpCodes.Call) {
                 MethodInfo operand = codes[i].operand as MethodInfo;
                 //Console.WriteLine(operand.FullDescription());
-                if (operand.FullDescription().Contains("get_GetInstanceProcAddr()")) { //We need this patch, otherwise Harmony (actually MonoMod) gets mad about an "Unexpected null"
+                /*if (operand.FullDescription().Contains("get_GetInstanceProcAddr()")) { //We need this patch, otherwise Harmony (actually MonoMod) gets mad about an "Unexpected null"
                     codes[i] = new CodeInstruction(OpCodes.Call, typeof(ConstructorPatch).GetMethod(nameof(get_GetInstanceProcAddr_replace)));
-                } else if (operand?.Name == "GetMemoryProperties2") {
+                } else */if (operand?.Name == "GetMemoryProperties2") {
                     //Console.WriteLine("This little rascal");
                     codes[i].opcode = OpCodes.Pop;
                     codes.Insert(i+1, new CodeInstruction(OpCodes.Pop));      //Consume the second
@@ -436,7 +468,7 @@ class ConstructorPatch {
                     codes.Insert(i+2, new CodeInstruction(OpCodes.Pop));      //Consume the second
                     codes.Insert(i+3, new CodeInstruction(OpCodes.Ldc_I4_0)); //Push the object reference that the function was supposed to return (now null)
                 }
-            } else if (codes[i].opcode == OpCodes.Newobj) {
+            } /*else if (codes[i].opcode == OpCodes.Newobj) {
                 ConstructorInfo operand = codes[i].operand as ConstructorInfo;
                 //Console.WriteLine(operand.FullDescription());
                 if (ContainsAny(operand.FullDescription(), ["GlfwWindowCloseCallback::.ctor", "GlfwKeyCallback::.ctor",
@@ -447,11 +479,11 @@ class ConstructorPatch {
                     codes.Insert(i+1, new CodeInstruction(OpCodes.Pop));      //Consume the second
                     codes.Insert(i+2, new CodeInstruction(OpCodes.Ldc_I4_0)); //Push the object reference that the function was supposed to return (now null)
                 }
-            } else if (codes[i].opcode == OpCodes.Callvirt) {
+            } else */if (codes[i].opcode == OpCodes.Callvirt) {
                 MethodInfo operand = codes[i].operand as MethodInfo;
                 //Console.WriteLine(operand.Name);
                 if (ContainsAny(operand.Name, ["add_OnClose", "add_OnKey", "add_OnMouseButton",
-                                               "add_OnCursorPos", "add_OnScroll"])) {
+                                               "add_OnCursorPos", "add_OnScroll", "set_Visible"])) {
                     codes[i].opcode = OpCodes.Pop;
                     codes.Insert(i+1, new CodeInstruction(OpCodes.Pop));
                     codes.Insert(i+2, new CodeInstruction(OpCodes.Call, typeof(ConstructorPatch).GetMethod(nameof(printer))));
@@ -460,9 +492,11 @@ class ConstructorPatch {
         }
 
         JankDebugger.Inject(codes);
+        //JankDebugger.stepMode = true;
 
         Console.WriteLine("Bye from the transpiler!");
         return codes.AsEnumerable();
+        //return instructions;
     }
 
     private static bool ContainsAny(string str, string[] list) {

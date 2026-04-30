@@ -15,22 +15,22 @@
       <HintPath>references\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="KSA">
-      <HintPath>references\KSA.dll</HintPath>
+      <HintPath>$(KSA_DEV_FOLDER)\KSA.dll</HintPath>
     </Reference>
     <Reference Include="Brutal.Glfw">
-      <HintPath>references\Brutal.Glfw.dll</HintPath>
+      <HintPath>$(KSA_DEV_FOLDER)\Brutal.Glfw.dll</HintPath>
     </Reference>
     <Reference Include="Planet.Render.Core">
-      <HintPath>references\Planet.Render.Core.dll</HintPath>
+      <HintPath>$(KSA_DEV_FOLDER)\Planet.Render.Core.dll</HintPath>
     </Reference>
     <Reference Include="Brutal.Vulkan">
-      <HintPath>references\Brutal.Vulkan.dll</HintPath>
+      <HintPath>$(KSA_DEV_FOLDER)\Brutal.Vulkan.dll</HintPath>
     </Reference>
     <Reference Include="Brutal.Vulkan.Abstractions">
-      <HintPath>references\Brutal.Vulkan.Abstractions.dll</HintPath>
+      <HintPath>$(KSA_DEV_FOLDER)\Brutal.Vulkan.Abstractions.dll</HintPath>
     </Reference>
     <Reference Include="Brutal.Core.Common">
-      <HintPath>references\Brutal.Core.Common.dll</HintPath>
+      <HintPath>$(KSA_DEV_FOLDER)\Brutal.Core.Common.dll</HintPath>
     </Reference>
   </ItemGroup>
 
