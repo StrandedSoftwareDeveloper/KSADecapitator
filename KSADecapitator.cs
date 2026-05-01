@@ -8,6 +8,7 @@ using KSA;
 using Core;
 using RenderCore;
 using Brutal.VulkanApi;
+using Brutal;
 
 [StarMapMod]
 public class KSADecapitator {
@@ -344,6 +345,23 @@ public class DecapPatches {
         JankDebugger.stepMode = true;
         return false;
     }
+
+    [HarmonyPatch(typeof(KSA.Rendering.DeviceHostSharedMemory), MethodType.Constructor)]
+    [HarmonyPatch(new Type[] { typeof(ByteSize), typeof(VkBufferUsageFlags), typeof(String) })]
+    [HarmonyPrefix]
+    public static bool RenderingDeviceHostSharedMemoryCtor(ByteSize initialSize, VkBufferUsageFlags usageFlags, String name) {
+        Console.WriteLine("RenderingDeviceHostSharedMemory..ctor prefix");
+        return false;
+    }
+    
+    [HarmonyPatch(typeof(KSA.PartSelectedRenderer), nameof(KSA.PartSelectedRenderer.Build))]
+    [HarmonyPatch(new Type[] {  })]
+    [HarmonyPrefix]
+    public static bool Build() {
+        Console.WriteLine("KSA.PartSelectedRenderer.Build() prefix");
+        return false;
+    }
+
 
     /*[HarmonyPatch(typeof(KSA.SuperMeshRenderSystem), MethodType.Constructor)]
     [HarmonyPatch(new Type[] { typeof(IGlobalRenderSystem), typeof(GpuTextureSystem), typeof(KSA.Rendering.Lighting.LightSystem) })]
