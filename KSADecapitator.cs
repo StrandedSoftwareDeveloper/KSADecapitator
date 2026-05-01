@@ -357,8 +357,16 @@ public class DecapPatches {
     [HarmonyPatch(typeof(KSA.PartSelectedRenderer), nameof(KSA.PartSelectedRenderer.Build))]
     [HarmonyPatch(new Type[] {  })]
     [HarmonyPrefix]
-    public static bool Build() {
+    public static bool PartSelectedRendererBuildPfx() {
         Console.WriteLine("KSA.PartSelectedRenderer.Build() prefix");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.PartModelRenderer), nameof(KSA.PartModelRenderer.Build))]
+    [HarmonyPatch(new Type[] {  })]
+    [HarmonyPrefix]
+    public static bool PartModelRendererBuildPfx() {
+        Console.WriteLine("KSA.PartModelRenderer.Build() prefix");
         return false;
     }
 

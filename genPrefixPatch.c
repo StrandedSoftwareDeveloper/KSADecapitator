@@ -1,3 +1,5 @@
+//Used with `tcc -run genPrefixPatch.c $(xclip -o -selection "clipboard") | xclip -selection "clipboard"` for a tighter dev cycle
+
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -10,12 +12,11 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    //Brutal.VulkanApi.Abstractions.DescriptorSetLayoutExExtensions.CreateDescriptorSetLayout(Device device, CreateInfo createInfo, VkAllocator allocator)
-
     size_t inputLen = strlen(argv[1]);
     char *className = calloc(inputLen, sizeof(char)); //None of these strings can be bigger than the input
     char *fullFunctionName = calloc(inputLen, sizeof(char));
     char *functionNameWithArgs = calloc(inputLen, sizeof(char));
+    char *patchName = calloc(inputLen, sizeof(char));
 
     int numArgs = 0;
     char **argTypes = NULL;
@@ -42,6 +43,13 @@ int main(int argc, char **argv) {
     
     for (int i=lastDotPos+1; i<inputLen; i++) {
         functionNameWithArgs[i-(lastDotPos+1)] = argv[1][i];
+    }
+    
+    int patchNameIndex = 0;
+    for (int i=0; i<openParenPos; i++) {
+        if (argv[1][i] != '.') {
+            patchName[patchNameIndex++] = argv[1][i];
+        }
     }
     
     
@@ -86,13 +94,17 @@ int main(int argc, char **argv) {
 
     printf(" })]\n");
     printf("[HarmonyPrefix]\n");
-    //printf("public static bool RenderingDeviceHostSharedMemoryCtor(ByteSize initialSize, VkBufferUsageFlags usageFlags, String name) {\n");
-    printf("public static bool %s {\n", functionNameWithArgs);
+    printf("public static bool %sPfx%s {\n", patchName, argv[1]+openParenPos);
     printf("    Console.WriteLine(\"%s() prefix\");\n", fullFunctionName);
     printf("    return false;\n");
     printf("}\n");
 
+    for (int i=0; i<numArgs; i++) {
+        free(argTypes[i]);
+    }
+    
     free(argTypes);
+    free(patchName);
     free(functionNameWithArgs);
     free(fullFunctionName);
     free(className);
