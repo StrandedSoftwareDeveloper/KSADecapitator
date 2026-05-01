@@ -10,6 +10,7 @@ using RenderCore;
 using Brutal.VulkanApi;
 using Brutal;
 using KSA.Rendering.Lighting;
+using Brutal.Numerics;
 
 [StarMapMod]
 public class KSADecapitator {
@@ -76,6 +77,7 @@ public class DecapPatches {
         Console.WriteLine("Hi from GlfwInit");
         //PostNativeLoadPatches.Patch();
         __result = true;
+        JankDebugger.stepMode = true;
         return false;
     }
 
@@ -112,7 +114,11 @@ public class DecapPatches {
     [HarmonyPrefix]
     public static bool CreateWindowPatch(ref Brutal.GlfwApi.GlfwWindow __result) {
         Console.WriteLine("Hi from GlfwCreateWindow");
-        //__result = ;
+        __result = (Brutal.GlfwApi.GlfwWindow)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(Brutal.GlfwApi.GlfwWindow));
+        __result.Width = 1920;
+        __result.Height = 1080;
+        __result.CursorPos = new double2(1.0, 1.0);
+        __result.AspectRatio = (float)__result.Width / (float)__result.Height;
         return false;
     }
 
@@ -343,7 +349,6 @@ public class DecapPatches {
     [HarmonyPrefix]
     public static bool PrePassRendererBuildPfx() {  
         Console.WriteLine("PrePassRendererBuild prefix");
-        JankDebugger.stepMode = true;
         return false;
     }
 
@@ -379,20 +384,19 @@ public class DecapPatches {
         return false;
     }
 
-
-    /*[HarmonyPatch(typeof(KSA.SuperMeshRenderSystem), MethodType.Constructor)]
-    [HarmonyPatch(new Type[] { typeof(IGlobalRenderSystem), typeof(GpuTextureSystem), typeof(KSA.Rendering.Lighting.LightSystem) })]
+    [HarmonyPatch(typeof(KSA.CharacterRenderResources), MethodType.Constructor)]
+    [HarmonyPatch(new Type[] { typeof(IGlobalRenderSystem), typeof(SuperMeshRenderSystem) })]
     [HarmonyPrefix]
-    public static bool SuperMeshRenderSystemCtor() {
-        Console.WriteLine("SuperMeshRenderSystem..ctor prefix");
+    public static bool KSACharacterRenderResourcesctorPfx(IGlobalRenderSystem context, SuperMeshRenderSystem meshRenderSystem) {
+        Console.WriteLine("KSA.CharacterRenderResources..ctor() prefix");
         return false;
     }
 
-    [HarmonyPatch(typeof(KSA.CharacterRenderResources), MethodType.Constructor)]
-    [HarmonyPatch(new Type[] { typeof(IGlobalRenderSystem), typeof(KSA.SuperMeshRenderSystem) })]
+    [HarmonyPatch(typeof(KSA.Rendering.Particles.ParticleEmitterManager), MethodType.Constructor)]
+    [HarmonyPatch(new Type[] { typeof(Int32), typeof(Boolean) })]
     [HarmonyPrefix]
-    public static bool CharacterRenderResourcesCtor() {
-        Console.WriteLine("CharacterRenderResources..ctor prefix");
+    public static bool KSARenderingParticlesParticleEmitterManagerctorPfx(Int32 emitterCount, Boolean preAllocateEmitters) {
+        Console.WriteLine("KSA.Rendering.Particles.ParticleEmitterManager..ctor() prefix");
         return false;
     }
 
@@ -418,7 +422,31 @@ public class DecapPatches {
         return false;
     }
 
-    [HarmonyPatch(typeof(KSA.SubPartSelectedRenderer), nameof(KSA.SubPartSelectedRenderer.Build))]
+    [HarmonyPatch(typeof(KSA.KittenRenderable), MethodType.Constructor)]
+    [HarmonyPatch(new Type[] { typeof(String) })]
+    [HarmonyPrefix]
+    public static bool KSAKittenRenderablectorPfx(String characterId) {
+        Console.WriteLine("KSA.KittenRenderable..ctor() prefix");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.CanvasRenderer), MethodType.Constructor)]
+    [HarmonyPatch(new Type[] { typeof(GaugeCanvas), typeof(RendererContext) })]
+    [HarmonyPrefix]
+    public static bool KSACanvasRendererctorPfx(GaugeCanvas gaugeCanvas, RendererContext context) {
+        Console.WriteLine("KSA.CanvasRenderer..ctor() prefix");
+        return false;
+    }
+
+    /*[HarmonyPatch(typeof(KSA.ScreenReference), nameof(KSA.ScreenReference.UvToPixels))]
+    [HarmonyPatch(new Type[] { typeof(float2) })]
+    [HarmonyPrefix]
+    public static bool KSAScreenReferenceUvToPixelsPfx(ref float2 __result, float2 inUv) {
+        Console.WriteLine("KSA.ScreenReference.UvToPixels() prefix");
+        return false;
+    }*/
+
+    /*[HarmonyPatch(typeof(KSA.SubPartSelectedRenderer), nameof(KSA.SubPartSelectedRenderer.Build))]
     [HarmonyPrefix]
     public static bool SubPartSelectedRendererBuildPrefix() {  
         Console.WriteLine("SubPartSelectedRendererBuild prefix");
@@ -440,13 +468,13 @@ public class DecapPatches {
         return false;
     }
 
-    [HarmonyPatch(typeof(KSA.DistantSphereRenderer), MethodType.Constructor)]
+    */[HarmonyPatch(typeof(KSA.DistantSphereRenderer), MethodType.Constructor)]
     [HarmonyPatch(new Type[] { typeof(StaticCelestial), typeof(RendererContext), typeof(MeshReference), typeof(Span<ShaderReference>) })]
     [HarmonyPrefix]
     public static bool DistantSphereRendererCtor() {
         Console.WriteLine("DistantSphereRenderer..ctor prefix");
         return false;
-    }
+    }/*
     
     [HarmonyPatch(typeof(KSA.SubPartModel), MethodType.Constructor)]
     [HarmonyPatch(new Type[] { typeof(SubPartModel.SubPartModelReference) })]
