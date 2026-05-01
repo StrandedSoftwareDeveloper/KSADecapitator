@@ -16,6 +16,7 @@ int main(int argc, char **argv) {
     char *className = calloc(inputLen, sizeof(char)); //None of these strings can be bigger than the input
     char *fullFunctionName = calloc(inputLen, sizeof(char));
     char *functionNameWithArgs = calloc(inputLen, sizeof(char));
+    char *functionNameNoArgs = calloc(inputLen, sizeof(char));
     char *patchName = calloc(inputLen, sizeof(char));
 
     int numArgs = 0;
@@ -43,6 +44,10 @@ int main(int argc, char **argv) {
     
     for (int i=lastDotPos+1; i<inputLen; i++) {
         functionNameWithArgs[i-(lastDotPos+1)] = argv[1][i];
+    }
+    
+    for (int i=lastDotPos+1; i<openParenPos; i++) {
+        functionNameNoArgs[i-(lastDotPos+1)] = argv[1][i];
     }
     
     int patchNameIndex = 0;
@@ -81,9 +86,14 @@ int main(int argc, char **argv) {
         }
         while (argv[1][index] == ' ' || argv[1][index] == ',') { index += 1; }
     }
+    
 
-
-    printf("[HarmonyPatch(typeof(%s), nameof(%s))]\n", className, fullFunctionName);
+    if (strcmp(functionNameNoArgs, "ctor") == 0) {
+        className[strlen(className)-1] = '\0';
+        printf("[HarmonyPatch(typeof(%s), MethodType.Constructor)]\n", className);
+    } else {
+        printf("[HarmonyPatch(typeof(%s), nameof(%s))]\n", className, fullFunctionName);
+    }
     printf("[HarmonyPatch(new Type[] { ");
     for (int i=0; i<numArgs; i++) {
         printf("typeof(%s)", argTypes[i]);
@@ -97,14 +107,15 @@ int main(int argc, char **argv) {
     printf("public static bool %sPfx%s {\n", patchName, argv[1]+openParenPos);
     printf("    Console.WriteLine(\"%s() prefix\");\n", fullFunctionName);
     printf("    return false;\n");
-    printf("}\n");
+    printf("}");
 
     for (int i=0; i<numArgs; i++) {
         free(argTypes[i]);
     }
-    
     free(argTypes);
+    
     free(patchName);
+    free(functionNameNoArgs);
     free(functionNameWithArgs);
     free(fullFunctionName);
     free(className);

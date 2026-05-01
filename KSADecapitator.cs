@@ -9,6 +9,7 @@ using Core;
 using RenderCore;
 using Brutal.VulkanApi;
 using Brutal;
+using KSA.Rendering.Lighting;
 
 [StarMapMod]
 public class KSADecapitator {
@@ -367,6 +368,14 @@ public class DecapPatches {
     [HarmonyPrefix]
     public static bool PartModelRendererBuildPfx() {
         Console.WriteLine("KSA.PartModelRenderer.Build() prefix");
+        return false;
+    }
+
+    [HarmonyPatch(typeof(KSA.SuperMeshRenderSystem), MethodType.Constructor)]
+    [HarmonyPatch(new Type[] { typeof(IGlobalRenderSystem), typeof(PassContext), typeof(GpuTextureSystem), typeof(GpuMaterialSystem), typeof(LightSystem) })]
+    [HarmonyPrefix]
+    public static bool KSASuperMeshRenderSystemctorPfx(IGlobalRenderSystem rs, PassContext passContext, GpuTextureSystem textureLibrary, GpuMaterialSystem materialSystem, LightSystem lightSystem) {
+        Console.WriteLine("KSA.SuperMeshRenderSystem..ctor() prefix");
         return false;
     }
 
